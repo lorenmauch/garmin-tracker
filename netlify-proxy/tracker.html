@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Where is Loren?</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: transparent; }
+#gtrk{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:100%;margin:0 auto}
+#gtrk-head{background:#1a1a18;color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;border-radius:12px 12px 0 0;flex-wrap:wrap}
+#gtrk-dot{width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0;position:relative}
+#gtrk-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid #4ade80;opacity:.5;animation:gtrk-pulse 2s ease-out infinite}
+@keyframes gtrk-pulse{0%{transform:scale(.8);opacity:.5}100%{transform:scale(1.8);opacity:0}}
+#gtrk-title{font-size:15px;font-weight:600}
+#gtrk-sub{font-size:12px;color:#a0a09a;margin-top:2px}
+#gtrk-btns{margin-left:auto;display:flex;gap:8px}
+.gtrk-btn{font-size:12px;font-weight:500;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;text-decoration:none;display:inline-block;white-space:nowrap}
+.gtrk-btn-orange{background:#FF6900;color:#fff}
+.gtrk-btn:hover{opacity:.85}
+#gtrk-map{width:100%;height:420px;background:#d4d0c8;display:block}
+#gtrk-foot{background:#fff;border:1px solid #e5e4df;border-top:none;border-radius:0 0 12px 12px;padding:12px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between}
+.gtrk-stat{display:flex;align-items:center;gap:6px;font-size:12px;color:#5a5a54}
+.gtrk-stat svg{color:#FF6900;flex-shrink:0}
+#gtrk-status{font-size:12px;color:#a0a09a}
+#gtrk-info{background:#fff;border:1px solid #e5e4df;border-top:none;padding:10px 20px;display:none;font-size:13px;color:#333;gap:16px;flex-wrap:wrap}
+#gtrk-info.visible{display:flex}
+.gtrk-chip{display:flex;flex-direction:column;gap:2px}
+.gtrk-chip-label{font-size:11px;color:#a0a09a;text-transform:uppercase;letter-spacing:.04em}
+.gtrk-chip-value{font-weight:600;color:#1a1a18}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+
+<div id="gtrk">
+  <div id="gtrk-head">
+    <div id="gtrk-dot"></div>
+    <div>
+      <div id="gtrk-title">Loren &ldquo;Butterfingers&rdquo; on Trail</div>
+      <div id="gtrk-sub">Live inReach satellite tracking &middot; CDT 2027</div>
+    </div>
+    <div id="gtrk-btns">
+      <a class="gtrk-btn gtrk-btn-orange" href="https://share.garmin.com/9G2GF" target="_blank" rel="noopener">Full map ↗</a>
+    </div>
+  </div>
+
+  <div id="gtrk-info">
+    <div class="gtrk-chip"><span class="gtrk-chip-label">Last seen</span><span class="gtrk-chip-value" id="gtrk-time">—</span></div>
+    <div class="gtrk-chip"><span class="gtrk-chip-label">Coordinates</span><span class="gtrk-chip-value" id="gtrk-coords">—</span></div>
+    <div class="gtrk-chip"><span class="gtrk-chip-label">Elevation</span><span class="gtrk-chip-value" id="gtrk-elev">—</span></div>
+    <div class="gtrk-chip"><span class="gtrk-chip-label">Speed</span><span class="gtrk-chip-value" id="gtrk-speed">—</span></div>
+  </div>
+
+  <div id="gtrk-map"></div>
+
+  <div id="gtrk-foot">
+    <div style="display:flex;gap:18px;flex-wrap:wrap">
+      <span class="gtrk-stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        Garmin inReach satellite
+      </span>
+      <span class="gtrk-stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Updates every 10–30 min on trail
+      </span>
+    </div>
+    <span id="gtrk-status">Loading track…</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+  var PROXY = 'https://unrivaled-seahorse-d7a575.netlify.app/.netlify/functions/garmin-proxy';
+
+  function getTagText(el, tag) {
+    var n = el.getElementsByTagName(tag)[0];
+    return n ? n.textContent.trim() : '';
+  }
+
+  function parseExtData(pm) {
+    var result = {};
+    var pairs = pm.getElementsByTagName('Data');
+    for (var i = 0; i < pairs.length; i++) {
+      var name = pairs[i].getAttribute('name');
+      var val  = getTagText(pairs[i], 'value');
+      if (name) result[name] = val;
+    }
+    return result;
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d)) return iso;
+    var now = new Date();
+    var diff = Math.floor((now - d) / 60000);
+    if (diff < 1)  return 'Just now';
+    if (diff < 60) return diff + ' min ago';
+    var hrs = Math.floor(diff / 60);
+    if (hrs < 24)  return hrs + ' hr' + (hrs > 1 ? 's' : '') + ' ago';
+    return d.toLocaleDateString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  }
+
+  function formatElev(meters) {
+    if (!meters) return '—';
+    var ft = Math.round(parseFloat(meters) * 3.28084);
+    return ft.toLocaleString() + ' ft';
+  }
+
+  function formatSpeed(kmh) {
+    if (!kmh || parseFloat(kmh) === 0) return 'Stopped';
+    var mph = (parseFloat(kmh) * 0.621371).toFixed(1);
+    return mph + ' mph';
+  }
+
+  var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: false });
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    maxZoom: 16
+  }).addTo(map);
+
+  var posIcon = L.divIcon({
+    html: '<div style="width:14px;height:14px;background:#FF6900;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(255,105,0,.35)"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7], className: ''
+  });
+
+  var trackLine = null, posMarker = null;
+
+  function loadTrack() {
+    document.getElementById('gtrk-status').textContent = 'Loading track…';
+    var d1 = '2025-01-01T00:00:00Z';
+    var d2 = new Date().toISOString();
+    var url = PROXY + '?d1=' + d1 + '&d2=' + d2;
+
+    fetch(url)
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function(xml) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(xml, 'text/xml');
+        var placemarks = doc.getElementsByTagName('Placemark');
+        var points = [], latestPm = null, latestTime = 0;
+
+        for (var i = 0; i < placemarks.length; i++) {
+          var pm = placemarks[i];
+          var coordStr = getTagText(pm, 'coordinates');
+          if (!coordStr) continue;
+          var parts = coordStr.trim().split(',');
+          if (parts.length < 2) continue;
+          var lng = parseFloat(parts[0]);
+          var lat = parseFloat(parts[1]);
+          if (isNaN(lat) || isNaN(lng)) continue;
+          points.push([lat, lng]);
+          var when = getTagText(pm, 'when') || getTagText(pm, 'TimeStamp');
+          var t = when ? new Date(when).getTime() : 0;
+          if (t > latestTime) { latestTime = t; latestPm = { lat: lat, lng: lng, time: when, pm: pm }; }
+        }
+
+        if (points.length === 0) {
+          document.getElementById('gtrk-status').textContent = 'No track data yet — device not active';
+          map.setView([37, -107], 6);
+          return;
+        }
+
+        if (trackLine) map.removeLayer(trackLine);
+        trackLine = L.polyline(points, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
+        var last = points[points.length - 1];
+        if (posMarker) map.removeLayer(posMarker);
+        posMarker = L.marker(last, { icon: posIcon }).addTo(map);
+        map.fitBounds(trackLine.getBounds(), { padding: [30, 30] });
+
+        if (latestPm) {
+          var ext = parseExtData(latestPm.pm);
+          document.getElementById('gtrk-time').textContent   = formatTime(latestPm.time);
+          document.getElementById('gtrk-coords').textContent = latestPm.lat.toFixed(4) + '°, ' + latestPm.lng.toFixed(4) + '°';
+          document.getElementById('gtrk-elev').textContent   = formatElev(ext['Elevation']);
+          document.getElementById('gtrk-speed').textContent  = formatSpeed(ext['Velocity']);
+          document.getElementById('gtrk-info').classList.add('visible');
+          var msg = ext['Text'] || '';
+          var popupLines = [];
+          if (msg) popupLines.push('<b>Message:</b> ' + msg);
+          popupLines.push('<b>Last update:</b> ' + formatTime(latestPm.time));
+          popupLines.push('<a href="https://share.garmin.com/9G2GF" target="_blank">Reply on MapShare ↗</a>');
+          posMarker.bindPopup(popupLines.join('<br>'));
+        }
+
+        var pts = points.length;
+        document.getElementById('gtrk-status').textContent = pts + ' track point' + (pts !== 1 ? 's' : '') + ' · Auto-refreshes every 5 min';
+      })
+      .catch(function(err) {
+        document.getElementById('gtrk-status').textContent = 'Could not load track.';
+        console.error('Garmin tracker error:', err);
+        map.setView([37, -107], 5);
+      });
+  }
+
+  loadTrack();
+  setInterval(loadTrack, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
