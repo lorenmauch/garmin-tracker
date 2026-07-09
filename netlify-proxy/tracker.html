@@ -37,7 +37,7 @@ body { background: transparent; }
   <div id="gtrk-head">
     <div id="gtrk-dot"></div>
     <div>
-      <div id="gtrk-title">Loren &ldquo;Butterfingers&rdquo; on Trail</div>
+      <div id="gtrk-title">Loren AKA Butterfingers on Trail</div>
       <div id="gtrk-sub">Live inReach satellite tracking &middot; Tahoe Rim Trail 2026</div>
     </div>
     <div id="gtrk-btns">
@@ -50,6 +50,7 @@ body { background: transparent; }
     <div class="gtrk-chip"><span class="gtrk-chip-label">Coordinates</span><span class="gtrk-chip-value" id="gtrk-coords">—</span></div>
     <div class="gtrk-chip"><span class="gtrk-chip-label">Elevation</span><span class="gtrk-chip-value" id="gtrk-elev">—</span></div>
     <div class="gtrk-chip"><span class="gtrk-chip-label">Speed</span><span class="gtrk-chip-value" id="gtrk-speed">—</span></div>
+    <div class="gtrk-chip"><span class="gtrk-chip-label">Heading</span><span class="gtrk-chip-value" id="gtrk-course">—</span></div>
   </div>
 
   <div id="gtrk-map"></div>
@@ -115,6 +116,15 @@ body { background: transparent; }
     return mph + ' mph';
   }
 
+  function formatCourse(courseStr) {
+    if (!courseStr) return '—';
+    var deg = parseFloat(courseStr);
+    if (isNaN(deg)) return '—';
+    var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    var idx = Math.round(deg / 22.5) % 16;
+    return Math.round(deg) + '° ' + dirs[idx];
+  }
+
   var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: false });
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a>',
@@ -130,7 +140,7 @@ body { background: transparent; }
 
   function loadTrack() {
     document.getElementById('gtrk-status').textContent = 'Loading track…';
-    var d1 = '2026-01-01T00:00:00Z';
+    var d1 = '2026-07-10T00:00:00Z';
     var d2 = new Date().toISOString();
     var url = PROXY + '?d1=' + d1 + '&d2=' + d2;
 
@@ -176,6 +186,7 @@ body { background: transparent; }
           document.getElementById('gtrk-coords').textContent = latestPm.lat.toFixed(4) + '°, ' + latestPm.lng.toFixed(4) + '°';
           document.getElementById('gtrk-elev').textContent   = formatElev(ext['Elevation']);
           document.getElementById('gtrk-speed').textContent  = formatSpeed(ext['Velocity']);
+          document.getElementById('gtrk-course').textContent = formatCourse(ext['Course']);
           document.getElementById('gtrk-info').classList.add('visible');
           var msg = ext['Text'] || '';
           var popupLines = [];
