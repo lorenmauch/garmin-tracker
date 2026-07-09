@@ -19,7 +19,7 @@ body { background: transparent; }
 .gtrk-btn-orange{background:#FF6900;color:#fff}
 .gtrk-btn:hover{opacity:.85}
 #gtrk-map{width:100%;height:420px;background:#d4d0c8;display:block}
-#gtrk-foot{background:#fff;border:1px solid #e5e4df;border-top:none;border-radius:0 0 12px 12px;padding:12px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between}
+#gtrk-foot{background:#fff;border:1px solid #e5e4df;border-top:none;padding:12px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between}
 .gtrk-stat{display:flex;align-items:center;gap:6px;font-size:12px;color:#5a5a54}
 .gtrk-stat svg{color:#FF6900;flex-shrink:0}
 #gtrk-status{font-size:12px;color:#a0a09a}
@@ -28,6 +28,9 @@ body { background: transparent; }
 .gtrk-chip{display:flex;flex-direction:column;gap:2px}
 .gtrk-chip-label{font-size:11px;color:#a0a09a;text-transform:uppercase;letter-spacing:.04em}
 .gtrk-chip-value{font-weight:600;color:#1a1a18}
+#gtrk-back{background:#fff;border:1px solid #e5e4df;border-top:none;border-radius:0 0 12px 12px;padding:10px 20px;text-align:center;font-size:13px}
+#gtrk-back a{color:#FF6900;font-weight:600;text-decoration:none}
+#gtrk-back a:hover{text-decoration:underline}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
@@ -41,7 +44,7 @@ body { background: transparent; }
       <div id="gtrk-sub">Live inReach satellite tracking &middot; Tahoe Rim Trail 2026</div>
     </div>
     <div id="gtrk-btns">
-      <a class="gtrk-btn gtrk-btn-orange" href="https://share.garmin.com/9G2GF" target="_blank" rel="noopener">Garmin map ↗</a>
+      <a class="gtrk-btn gtrk-btn-orange" href="https://share.garmin.com/9G2GF" target="_blank" rel="noopener">Full map ↗</a>
     </div>
   </div>
 
@@ -67,6 +70,10 @@ body { background: transparent; }
       </span>
     </div>
     <span id="gtrk-status">Loading track…</span>
+  </div>
+
+  <div id="gtrk-back">
+    <a href="https://YOUR-WORDPRESS-SITE.com" target="_blank" rel="noopener">← Back to Loren's Hiking Blog</a>
   </div>
 </div>
 
@@ -140,7 +147,7 @@ body { background: transparent; }
 
   function loadTrack() {
     document.getElementById('gtrk-status').textContent = 'Loading track…';
-    var d1 = '2026-01-10T00:00:00Z';
+    var d1 = '2026-07-10T00:00:00Z';
     var d2 = new Date().toISOString();
     var url = PROXY + '?d1=' + d1 + '&d2=' + d2;
 
