@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Butterfingers Trail Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f7f6f3; color: #1a1a18; padding: 40px 20px; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+p { font-size: 14px; color: #6b6b65; margin-bottom: 32px; }
+.trips { display: flex; flex-direction: column; gap: 12px; max-width: 500px; }
+.trip-card { background: #fff; border: 1px solid #e5e4df; border-radius: 10px; padding: 16px 20px; text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: space-between; }
+.trip-card:hover { border-color: #FF6900; }
+.trip-name { font-weight: 600; font-size: 15px; }
+.trip-dates { font-size: 12px; color: #a0a09a; margin-top: 3px; }
+.trip-arrow { color: #FF6900; font-size: 18px; }
+.trip-card.active { border-color: #FF6900; }
+.active-badge { font-size: 11px; background: #FF6900; color: #fff; padding: 2px 8px; border-radius: 99px; margin-left: 8px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<h1>🥾 Butterfingers on Trail</h1>
+<p>Live satellite tracking via Garmin inReach</p>
+
+<div class="trips">
+  <a class="trip-card active" href="tracker.html">
+    <div>
+      <div class="trip-name">Current Trip <span class="active-badge">LIVE</span></div>
+      <div class="trip-dates">Always up to date</div>
+    </div>
+    <span class="trip-arrow">→</span>
+  </a>
+
+  <a class="trip-card" href="trt-2026.html">
+    <div>
+      <div class="trip-name">Tahoe Rim Trail</div>
+      <div class="trip-dates">2026</div>
+    </div>
+    <span class="trip-arrow">→</span>
+  </a>
+
+  <a class="trip-card" href="cdt-2027.html">
+    <div>
+      <div class="trip-name">Continental Divide Trail</div>
+      <div class="trip-dates">2027</div>
+    </div>
+    <span class="trip-arrow">→</span>
+  </a>
+</div>
+</body>
+</html>
