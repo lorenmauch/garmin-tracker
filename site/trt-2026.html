@@ -172,7 +172,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 
   function drawArrows(points) {
     // Draw ~20 arrows evenly spaced along the track
-    var step = Math.max(1, Math.floor(points.length / 20));
+    var step = 12;
     for (var a = step; a < points.length; a += step) {
       var p1 = map.latLngToLayerPoint(L.latLng(points[a - 1]));
       var p2 = map.latLngToLayerPoint(L.latLng(points[a]));
