@@ -18,7 +18,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-btn { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
 .gtrk-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
 .gtrk-btn:hover { opacity: .85; }
-#gtrk-map { width: 100%; height: calc(100vh - 180px); background: #d4d0c8; display: block; }
+#gtrk-map { width: 100%; height: calc(100vh - 120px); background: #d4d0c8; display: block; }
 #gtrk-info { background: #fff; border: 1px solid #e5e4df; border-top: none; padding: 10px 20px; display: none; font-size: 13px; color: #333; gap: 16px; flex-wrap: wrap; }
 #gtrk-info.visible { display: flex; }
 .gtrk-chip { display: flex; flex-direction: column; gap: 2px; }
@@ -37,22 +37,19 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     <div id="gtrk-dot"></div>
     <div>
       <div id="gtrk-title">Loren &ldquo;Butterfingers&rdquo; on Trail</div>
-      <div id="gtrk-sub">Live inReach satellite tracking &middot; Tahoe Rim Trail 2026</div>
+      <div id="gtrk-sub">Live inReach satellite tracking &middot; CDT 2027</div>
     </div>
     <div id="gtrk-btns">
       <button class="gtrk-btn gtrk-btn-ghost" onclick="showFullTrack()">Show full track</button>
     </div>
   </div>
-
   <div id="gtrk-info">
     <div class="gtrk-chip"><span class="gtrk-chip-label">Last seen</span><span class="gtrk-chip-value" id="gtrk-time">—</span></div>
     <div class="gtrk-chip"><span class="gtrk-chip-label">Coordinates</span><span class="gtrk-chip-value" id="gtrk-coords">—</span></div>
     <div class="gtrk-chip"><span class="gtrk-chip-label">Elevation</span><span class="gtrk-chip-value" id="gtrk-elev">—</span></div>
     <div class="gtrk-chip"><span class="gtrk-chip-label">Avg Speed (24hr)</span><span class="gtrk-chip-value" id="gtrk-speed">—</span></div>
   </div>
-
   <div id="gtrk-map"></div>
-
   <div id="gtrk-foot">
     <div style="display:flex;gap:18px;flex-wrap:wrap">
       <span class="gtrk-stat">
@@ -67,13 +64,13 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     <span id="gtrk-status">Loading track…</span>
   </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 <script>
 (function() {
   // ---- UPDATE THIS for each trip ----
-  var d1 = '2026-07-10T00:00:00Z';
-  var d2 = '2026-07-18T23:59:59Z';
+  var d1 = '2026-01-01T00:00:00Z';
+  var d2 = new Date().toISOString();
   // ------------------------------------
 
   var PROXY = '/garmin-proxy';
@@ -113,12 +110,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     return ft.toLocaleString() + ' ft';
   }
 
-  function formatSpeed(kmh) {
-    if (!kmh || parseFloat(kmh) === 0) return 'Stopped';
-    var mph = (parseFloat(kmh) * 0.621371).toFixed(1);
-    return mph + ' mph';
-  }
-
   function avg24hrSpeed(allPoints) {
     var now = new Date();
     var cutoff = new Date(now - 24 * 60 * 60 * 1000);
@@ -129,34 +120,42 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     return avg.toFixed(1) + ' mph avg';
   }
 
-  // Map setup
   var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: false });
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a>',
     maxZoom: 16
   }).addTo(map);
 
-  // Icons
   var posIcon = L.divIcon({
     html: '<div style="width:16px;height:16px;background:#FF6900;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(255,105,0,.3)"></div>',
     iconSize: [16, 16], iconAnchor: [8, 8], className: ''
   });
-
   var pingIcon = L.divIcon({
     html: '<div style="width:8px;height:8px;background:#FF6900;border:1.5px solid #fff;border-radius:50%;opacity:0.7"></div>',
     iconSize: [8, 8], iconAnchor: [4, 4], className: ''
   });
-
   var msgIcon = L.divIcon({
     html: '<div style="width:12px;height:12px;background:#3b82f6;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(59,130,246,.3)"></div>',
     iconSize: [12, 12], iconAnchor: [6, 6], className: ''
   });
+  var startIcon = L.divIcon({
+    html: '<div style="width:28px;height:28px;background:#22c55e;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3)">S</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14], className: ''
+  });
+  var finishIcon = L.divIcon({
+    html: '<div style="width:28px;height:28px;background:#ef4444;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3)">F</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14], className: ''
+  });
 
-  var trackLine = null, posMarker = null, pingMarkers = [], msgMarkers = [], allPoints = [], trackBounds = null;
+  var trackLine = null, decorator = null, posMarker = null, startMarker = null, finishMarker = null;
+  var pingMarkers = [], msgMarkers = [], allPoints = [], trackBounds = null;
 
   function clearLayers() {
     if (trackLine) map.removeLayer(trackLine);
+    if (decorator) map.removeLayer(decorator);
     if (posMarker) map.removeLayer(posMarker);
+    if (startMarker) map.removeLayer(startMarker);
+    if (finishMarker) map.removeLayer(finishMarker);
     pingMarkers.forEach(function(m) { map.removeLayer(m); });
     msgMarkers.forEach(function(m) { map.removeLayer(m); });
     pingMarkers = []; msgMarkers = [];
@@ -189,14 +188,11 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
           var lng = parseFloat(parts[0]);
           var lat = parseFloat(parts[1]);
           if (isNaN(lat) || isNaN(lng)) continue;
-
           var when = getTagText(pm, 'when') || getTagText(pm, 'TimeStamp');
           var ext = parseExtData(pm);
           var msg = ext['Text'] || '';
-
           points.push([lat, lng]);
-          allPoints.push({ lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], msg: msg, pm: pm });
-
+          allPoints.push({ lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], msg: msg });
           var t = when ? new Date(when).getTime() : 0;
           if (t > latestTime) { latestTime = t; latestPm = allPoints[allPoints.length - 1]; }
         }
@@ -209,43 +205,56 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 
         clearLayers();
 
-        // Draw track line
+        // Track line
         trackLine = L.polyline(points, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
         trackBounds = trackLine.getBounds();
 
-        // Add ping marker at each point
-        allPoints.forEach(function(p) {
+        // Directional arrows
+        decorator = L.polylineDecorator(trackLine, {
+          patterns: [{
+            offset: '5%',
+            repeat: '8%',
+            symbol: L.Symbol.arrowHead({
+              pixelSize: 8,
+              polygon: false,
+              pathOptions: { color: '#FF6900', fillOpacity: 1, weight: 2, opacity: 0.8 }
+            })
+          }]
+        }).addTo(map);
+
+        // Start marker — green S
+        var first = allPoints[0];
+        startMarker = L.marker([first.lat, first.lng], { icon: startIcon, zIndexOffset: 900 }).addTo(map);
+        startMarker.bindPopup('<b>🟢 Start</b><br>' + (first.time ? new Date(first.time).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}) : '') + '<br>' + formatElev(first.elev));
+
+        // End marker — live dot or red F
+        var last = points[points.length - 1];
+        var d2Date = new Date(d2);
+        var isLive = d2Date > new Date(Date.now() - 60000);
+        if (isLive) {
+          posMarker = L.marker(last, { icon: posIcon, zIndexOffset: 1000 }).addTo(map);
+          if (latestPm) posMarker.bindPopup('<b>Current position</b><br>' + formatTime(latestPm.time) + '<br>' + formatElev(latestPm.elev));
+        } else {
+          finishMarker = L.marker(last, { icon: finishIcon, zIndexOffset: 1000 }).addTo(map);
+          if (latestPm) finishMarker.bindPopup('<b>🔴 Finish</b><br>' + (latestPm.time ? new Date(latestPm.time).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}) : '') + '<br>' + formatElev(latestPm.elev));
+        }
+
+        // Ping markers (skip first point — already has start marker)
+        allPoints.forEach(function(p, idx) {
+          if (idx === 0) return;
           if (p.msg) {
-            // Message marker — blue dot
             var m = L.marker([p.lat, p.lng], { icon: msgIcon }).addTo(map);
-            m.bindPopup(
-              '<b>📍 ' + formatTime(p.time) + '</b><br>' +
-              p.msg + '<br>' +
-              '<small>' + formatElev(p.elev) + '</small>'
-            );
+            m.bindPopup('<b>📍 ' + formatTime(p.time) + '</b><br>' + p.msg + '<br><small>' + formatElev(p.elev) + '</small>');
             msgMarkers.push(m);
           } else {
-            // Regular ping marker — small orange dot
             var mk = L.marker([p.lat, p.lng], { icon: pingIcon }).addTo(map);
-            mk.bindPopup(
-              '<b>' + formatTime(p.time) + '</b><br>' +
-              'Elevation: ' + formatElev(p.elev)
-            );
+            mk.bindPopup('<b>' + formatTime(p.time) + '</b><br>Elevation: ' + formatElev(p.elev));
             pingMarkers.push(mk);
           }
         });
 
-        // Current position marker — large glowing dot
-        var last = points[points.length - 1];
-        posMarker = L.marker(last, { icon: posIcon, zIndexOffset: 1000 }).addTo(map);
-        if (latestPm) {
-          posMarker.bindPopup('<b>Last known position</b><br>' + formatTime(latestPm.time) + '<br>' + formatElev(latestPm.elev));
-        }
+        map.setView(last, 13);
 
-        // Zoom to last position
-        map.setView(last, 12);
-
-        // Update info bar
         if (latestPm) {
           document.getElementById('gtrk-time').textContent = formatTime(latestPm.time);
           document.getElementById('gtrk-coords').textContent = latestPm.lat.toFixed(4) + '°, ' + latestPm.lng.toFixed(4) + '°';
