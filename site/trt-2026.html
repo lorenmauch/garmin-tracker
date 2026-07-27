@@ -58,14 +58,13 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
       </span>
       <span class="gtrk-stat">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Updates every 10–30 min on trail
+        Updates every 10 min on trail
       </span>
     </div>
     <span id="gtrk-status">Loading track…</span>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-polylinedecorator/1.1.0/leaflet.polylineDecorator.min.js"></script>
 <script>
 (function() {
   // ---- UPDATE THIS for each trip ----
@@ -120,6 +119,12 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     return avg.toFixed(1) + ' mph avg';
   }
 
+  // Offset a lat/lng by pixel amount at current zoom
+  function offsetLatLng(map, latlng, dx, dy) {
+    var pt = map.latLngToContainerPoint(latlng);
+    return map.containerPointToLatLng([pt.x + dx, pt.y + dy]);
+  }
+
   var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: false });
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a>',
@@ -147,22 +152,45 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     iconSize: [28, 28], iconAnchor: [14, 14], className: ''
   });
 
-  var trackLine = null, decorator = null, posMarker = null, startMarker = null, finishMarker = null;
-  var pingMarkers = [], msgMarkers = [], allPoints = [], trackBounds = null;
+  var trackLine = null, posMarker = null, startMarker = null, finishMarker = null;
+  var pingMarkers = [], msgMarkers = [], arrowMarkers = [], allPoints = [], trackBounds = null;
 
   function clearLayers() {
     if (trackLine) map.removeLayer(trackLine);
-    if (decorator) map.removeLayer(decorator);
     if (posMarker) map.removeLayer(posMarker);
     if (startMarker) map.removeLayer(startMarker);
     if (finishMarker) map.removeLayer(finishMarker);
     pingMarkers.forEach(function(m) { map.removeLayer(m); });
     msgMarkers.forEach(function(m) { map.removeLayer(m); });
-    pingMarkers = []; msgMarkers = [];
+    arrowMarkers.forEach(function(m) { map.removeLayer(m); });
+    pingMarkers = []; msgMarkers = []; arrowMarkers = [];
   }
 
   function showFullTrack() {
     if (trackBounds) map.fitBounds(trackBounds, { padding: [30, 30] });
+  }
+
+  function drawArrows(points) {
+    // Draw ~20 arrows evenly spaced along the track
+    var step = Math.max(1, Math.floor(points.length / 20));
+    for (var a = step; a < points.length; a += step) {
+      var p1 = map.latLngToLayerPoint(L.latLng(points[a - 1]));
+      var p2 = map.latLngToLayerPoint(L.latLng(points[a]));
+      var angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+      var mid = L.latLng(
+        (points[a - 1][0] + points[a][0]) / 2,
+        (points[a - 1][1] + points[a][1]) / 2
+      );
+      var arrow = L.marker(mid, {
+        icon: L.divIcon({
+          html: '<div style="transform:rotate(' + angle + 'deg);font-size:14px;color:#FF6900;line-height:1;text-shadow:0 0 3px #fff;">➤</div>',
+          iconSize: [14, 14], iconAnchor: [7, 7], className: ''
+        }),
+        interactive: false,
+        zIndexOffset: 500
+      }).addTo(map);
+      arrowMarkers.push(arrow);
+    }
   }
 
   function loadTrack() {
@@ -209,37 +237,34 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
         trackLine = L.polyline(points, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
         trackBounds = trackLine.getBounds();
 
-        // Directional arrows
-        decorator = L.polylineDecorator(trackLine, {
-          patterns: [{
-            offset: '5%',
-            repeat: '8%',
-            symbol: L.Symbol.arrowHead({
-              pixelSize: 8,
-              polygon: false,
-              pathOptions: { color: '#FF6900', fillOpacity: 1, weight: 2, opacity: 0.8 }
-            })
-          }]
-        }).addTo(map);
+        // Zoom to last position first so arrow pixel math works
+        var last = points[points.length - 1];
+        map.setView(last, 13);
 
-        // Start marker — green S
+        // Draw arrows after map has a view
+        drawArrows(points);
+
+        // Start marker — offset left (-18px)
         var first = allPoints[0];
-        startMarker = L.marker([first.lat, first.lng], { icon: startIcon, zIndexOffset: 900 }).addTo(map);
+        var startLatLng = offsetLatLng(map, L.latLng(first.lat, first.lng), -18, 0);
+        startMarker = L.marker(startLatLng, { icon: startIcon, zIndexOffset: 900 }).addTo(map);
         startMarker.bindPopup('<b>🟢 Start</b><br>' + (first.time ? new Date(first.time).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}) : '') + '<br>' + formatElev(first.elev));
 
-        // End marker — live dot or red F
-        var last = points[points.length - 1];
+        // End marker
         var d2Date = new Date(d2);
         var isLive = d2Date > new Date(Date.now() - 60000);
         if (isLive) {
+          // Live — glowing orange dot, no offset
           posMarker = L.marker(last, { icon: posIcon, zIndexOffset: 1000 }).addTo(map);
           if (latestPm) posMarker.bindPopup('<b>Current position</b><br>' + formatTime(latestPm.time) + '<br>' + formatElev(latestPm.elev));
         } else {
-          finishMarker = L.marker(last, { icon: finishIcon, zIndexOffset: 1000 }).addTo(map);
+          // Archived — red F marker offset right (+18px)
+          var finishLatLng = offsetLatLng(map, L.latLng(last[0], last[1]), 18, 0);
+          finishMarker = L.marker(finishLatLng, { icon: finishIcon, zIndexOffset: 1000 }).addTo(map);
           if (latestPm) finishMarker.bindPopup('<b>🔴 Finish</b><br>' + (latestPm.time ? new Date(latestPm.time).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}) : '') + '<br>' + formatElev(latestPm.elev));
         }
 
-        // Ping markers (skip first point — already has start marker)
+        // Ping markers (skip first — has start marker)
         allPoints.forEach(function(p, idx) {
           if (idx === 0) return;
           if (p.msg) {
@@ -253,8 +278,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
           }
         });
 
-        map.setView(last, 13);
-
+        // Update info bar
         if (latestPm) {
           document.getElementById('gtrk-time').textContent = formatTime(latestPm.time);
           document.getElementById('gtrk-coords').textContent = latestPm.lat.toFixed(4) + '°, ' + latestPm.lng.toFixed(4) + '°';
@@ -266,7 +290,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
         var pts = points.length;
         var msgs = msgMarkers.length;
         document.getElementById('gtrk-status').textContent =
-          pts + ' track points' + (msgs > 0 ? ' · ' + msgs + ' message' + (msgs > 1 ? 's' : '') : '') + ' · Auto-refreshes every 5 min';
+          pts + ' track points' + (msgs > 0 ? ' · ' + msgs + ' message' + (msgs > 1 ? 's' : '') : '') + ' · Auto-refreshes every 10 min';
       })
       .catch(function(err) {
         document.getElementById('gtrk-status').textContent = 'Could not load track.';
@@ -276,7 +300,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
   }
 
   loadTrack();
-  setInterval(loadTrack, 5 * 60 * 1000);
+  setInterval(loadTrack, 10 * 60 * 1000); // 10 minutes
 })();
 </script>
 </body>
