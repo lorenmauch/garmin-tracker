@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Where is Loren?</title>
+<title>Tahoe Rim Trail 2026</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 #gtrk { max-width: 100%; margin: 0 auto; }
-#gtrk-head { background: #1a1a18; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-radius: 12px 12px 0 0; flex-wrap: wrap; }
+#gtrk-head { background: #1a1a18; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-radius: 0; flex-wrap: wrap; }
 #gtrk-dot { width: 10px; height: 10px; border-radius: 50%; background: #4ade80; flex-shrink: 0; position: relative; }
 #gtrk-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #4ade80; opacity: .5; animation: gtrk-pulse 2s ease-out infinite; }
 @keyframes gtrk-pulse { 0% { transform: scale(.8); opacity: .5; } 100% { transform: scale(1.8); opacity: 0; } }
@@ -17,6 +17,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 #gtrk-btns { margin-left: auto; display: flex; gap: 8px; }
 .gtrk-btn { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
 .gtrk-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.gtrk-btn-orange { background: #FF6900; color: #fff; }
 .gtrk-btn:hover { opacity: .85; }
 #gtrk-map { width: 100%; height: calc(100vh - 120px); background: #d4d0c8; display: block; }
 #gtrk-info { background: #fff; border: 1px solid #e5e4df; border-top: none; padding: 10px 20px; display: none; font-size: 13px; color: #333; gap: 16px; flex-wrap: wrap; }
@@ -24,7 +25,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-chip { display: flex; flex-direction: column; gap: 2px; }
 .gtrk-chip-label { font-size: 11px; color: #a0a09a; text-transform: uppercase; letter-spacing: .04em; }
 .gtrk-chip-value { font-weight: 600; color: #1a1a18; }
-#gtrk-foot { background: #fff; border: 1px solid #e5e4df; border-top: none; border-radius: 0 0 12px 12px; padding: 12px 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+#gtrk-foot { background: #fff; border: 1px solid #e5e4df; border-top: none; border-radius: 0; padding: 12px 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
 .gtrk-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5a5a54; }
 .gtrk-stat svg { color: #FF6900; flex-shrink: 0; }
 #gtrk-status { font-size: 12px; color: #a0a09a; }
@@ -40,7 +41,8 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
       <div id="gtrk-sub">Live inReach satellite tracking &middot; Tahoe Rim Trail 2026</div>
     </div>
     <div id="gtrk-btns">
-      <button class="gtrk-btn gtrk-btn-ghost" onclick="showFullTrack()">Show full track</button>
+      <button class="gtrk-btn gtrk-btn-ghost" onclick="window.showFullTrack()">Show full track</button>
+      <a class="gtrk-btn gtrk-btn-orange" href="https://share.garmin.com/9G2GF" target="_blank" rel="noopener">Garmin map ↗</a>
     </div>
   </div>
   <div id="gtrk-info">
@@ -66,6 +68,12 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+var trackBounds = null;
+
+window.showFullTrack = function() {
+  if (trackBounds) map.fitBounds(trackBounds, { padding: [30, 30] });
+};
+
 (function() {
   // ---- UPDATE THIS for each trip ----
   var d1 = '2026-07-10T00:00:00Z';
@@ -94,13 +102,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     if (!iso) return '—';
     var d = new Date(iso);
     if (isNaN(d)) return iso;
-    var now = new Date();
-    var diff = Math.floor((now - d) / 60000);
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return diff + ' min ago';
-    var hrs = Math.floor(diff / 60);
-    if (hrs < 24) return hrs + ' hr' + (hrs > 1 ? 's' : '') + ' ago';
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
   function formatElev(meters) {
@@ -109,26 +111,39 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     return ft.toLocaleString() + ' ft';
   }
 
+  function formatSpeed(kmh) {
+    if (!kmh || parseFloat(kmh) === 0) return 'Stopped';
+    return (parseFloat(kmh) * 0.621371).toFixed(1) + ' mph';
+  }
+
+  function formatCourse(degrees) {
+    if (!degrees) return '—';
+    var deg = parseFloat(degrees);
+    var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    var dir = dirs[Math.round(deg / 22.5) % 16];
+    return dir + ' ' + Math.round(deg) + '°';
+  }
+
   function avg24hrSpeed(allPoints) {
     var now = new Date();
     var cutoff = new Date(now - 24 * 60 * 60 * 1000);
     var recent = allPoints.filter(function(p) { return p.time && new Date(p.time) > cutoff && p.speed; });
     if (recent.length === 0) return '—';
     var total = recent.reduce(function(sum, p) { return sum + parseFloat(p.speed); }, 0);
-    var avg = (total / recent.length) * 0.621371;
-    return avg.toFixed(1) + ' mph avg';
+    return ((total / recent.length) * 0.621371).toFixed(1) + ' mph avg';
   }
 
-  // Offset a lat/lng by pixel amount at current zoom
   function offsetLatLng(map, latlng, dx, dy) {
     var pt = map.latLngToContainerPoint(latlng);
     return map.containerPointToLatLng([pt.x + dx, pt.y + dy]);
   }
 
-  var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: false });
-  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> | © <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-    maxZoom: 16
+  var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: true });
+
+  // Esri World Topo map
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
+    maxZoom: 18
   }).addTo(map);
 
   var posIcon = L.divIcon({
@@ -153,7 +168,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
   });
 
   var trackLine = null, posMarker = null, startMarker = null, finishMarker = null;
-  var pingMarkers = [], msgMarkers = [], arrowMarkers = [], allPoints = [], trackBounds = null;
+  var pingMarkers = [], msgMarkers = [], arrowMarkers = [], allPoints = [];
 
   function clearLayers() {
     if (trackLine) map.removeLayer(trackLine);
@@ -166,12 +181,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     pingMarkers = []; msgMarkers = []; arrowMarkers = [];
   }
 
-  function showFullTrack() {
-    if (trackBounds) map.fitBounds(trackBounds, { padding: [30, 30] });
-  }
-
   function drawArrows(points) {
-    // Draw ~20 arrows evenly spaced along the track
     var step = 12;
     for (var a = step; a < points.length; a += step) {
       var p1 = map.latLngToLayerPoint(L.latLng(points[a - 1]));
@@ -191,6 +201,15 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
       }).addTo(map);
       arrowMarkers.push(arrow);
     }
+  }
+
+  function buildPopup(p) {
+    var lines = [];
+    lines.push('<b>' + formatTime(p.time) + '</b>');
+    lines.push('Elevation: ' + formatElev(p.elev));
+    lines.push('Speed: ' + formatSpeed(p.speed));
+    lines.push('Heading: ' + formatCourse(p.course));
+    return lines.join('<br>');
   }
 
   function loadTrack() {
@@ -220,65 +239,52 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
           var ext = parseExtData(pm);
           var msg = ext['Text'] || '';
           points.push([lat, lng]);
-          allPoints.push({ lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], msg: msg });
+          allPoints.push({ lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], course: ext['Course'], msg: msg });
           var t = when ? new Date(when).getTime() : 0;
           if (t > latestTime) { latestTime = t; latestPm = allPoints[allPoints.length - 1]; }
         }
 
         if (points.length === 0) {
           document.getElementById('gtrk-status').textContent = 'No track data yet — device not active';
-          map.setView([37, -107], 6);
+          map.setView([39, -120], 9);
           return;
         }
 
         clearLayers();
 
-        // Track line
         trackLine = L.polyline(points, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
         trackBounds = trackLine.getBounds();
 
-        // Zoom to last position first so arrow pixel math works
         var last = points[points.length - 1];
-        map.setView(last, 13);
+        map.setView(last, 12);
 
-        // Draw arrows after map has a view
         drawArrows(points);
 
-        // Start marker — offset left (-18px)
+        // Start marker offset left
         var first = allPoints[0];
         var startLatLng = offsetLatLng(map, L.latLng(first.lat, first.lng), -18, 0);
         startMarker = L.marker(startLatLng, { icon: startIcon, zIndexOffset: 900 }).addTo(map);
-        startMarker.bindPopup('<b>🟢 Start</b><br>' + (first.time ? new Date(first.time).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}) : '') + '<br>' + formatElev(first.elev));
+        startMarker.bindPopup('<b>🟢 Start</b><br>' + formatTime(first.time) + '<br>' + formatElev(first.elev));
 
-        // End marker
-        var d2Date = new Date(d2);
-        var isLive = d2Date > new Date(Date.now() - 60000);
-        if (isLive) {
-          // Live — glowing orange dot, no offset
-          posMarker = L.marker(last, { icon: posIcon, zIndexOffset: 1000 }).addTo(map);
-          if (latestPm) posMarker.bindPopup('<b>Current position</b><br>' + formatTime(latestPm.time) + '<br>' + formatElev(latestPm.elev));
-        } else {
-          // Archived — red F marker offset right (+18px)
-          var finishLatLng = offsetLatLng(map, L.latLng(last[0], last[1]), 18, 0);
-          finishMarker = L.marker(finishLatLng, { icon: finishIcon, zIndexOffset: 1000 }).addTo(map);
-          if (latestPm) finishMarker.bindPopup('<b>🔴 Finish</b><br>' + (latestPm.time ? new Date(latestPm.time).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'}) : '') + '<br>' + formatElev(latestPm.elev));
-        }
+        // Finish marker offset right
+        var finishLatLng = offsetLatLng(map, L.latLng(last[0], last[1]), 18, 0);
+        finishMarker = L.marker(finishLatLng, { icon: finishIcon, zIndexOffset: 1000 }).addTo(map);
+        if (latestPm) finishMarker.bindPopup('<b>🔴 Finish</b><br>' + formatTime(latestPm.time) + '<br>' + formatElev(latestPm.elev));
 
-        // Ping markers (skip first — has start marker)
+        // Ping markers
         allPoints.forEach(function(p, idx) {
           if (idx === 0) return;
           if (p.msg) {
             var m = L.marker([p.lat, p.lng], { icon: msgIcon }).addTo(map);
-            m.bindPopup('<b>📍 ' + formatTime(p.time) + '</b><br>' + p.msg + '<br><small>' + formatElev(p.elev) + '</small>');
+            m.bindPopup('<b>📍 Message</b><br>' + buildPopup(p) + '<br><i>' + p.msg + '</i>');
             msgMarkers.push(m);
           } else {
             var mk = L.marker([p.lat, p.lng], { icon: pingIcon }).addTo(map);
-            mk.bindPopup('<b>' + formatTime(p.time) + '</b><br>Elevation: ' + formatElev(p.elev));
+            mk.bindPopup(buildPopup(p));
             pingMarkers.push(mk);
           }
         });
 
-        // Update info bar
         if (latestPm) {
           document.getElementById('gtrk-time').textContent = formatTime(latestPm.time);
           document.getElementById('gtrk-coords').textContent = latestPm.lat.toFixed(4) + '°, ' + latestPm.lng.toFixed(4) + '°';
@@ -295,12 +301,12 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
       .catch(function(err) {
         document.getElementById('gtrk-status').textContent = 'Could not load track.';
         console.error('Garmin tracker error:', err);
-        map.setView([37, -107], 5);
+        map.setView([39, -120], 9);
       });
   }
 
   loadTrack();
-  setInterval(loadTrack, 10 * 60 * 1000); // 10 minutes
+  setInterval(loadTrack, 10 * 60 * 1000);
 })();
 </script>
 </body>
