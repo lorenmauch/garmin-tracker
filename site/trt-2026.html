@@ -450,7 +450,7 @@ function renderMessages() {
           }
 
           var t = when ? new Date(when).getTime() : 0;
-          if (t > latestTime) { latestTime = t; latestPm = point; }
+          if (!msg && t > latestTime) { latestTime = t; latestPm = point; }
         }
 
         if (allPoints.length === 0) {
