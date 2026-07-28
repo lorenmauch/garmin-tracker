@@ -21,6 +21,14 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
   text-align: center;
   pointer-events: none;
 }
+@media (max-width: 600px) {
+  #gtrk-countdown {
+    position: static;
+    transform: none;
+    text-align: left;
+    margin-top: 2px;
+  }
+}
 #gtrk-countdown-label { font-size: 10px; color: #a0a09a; text-transform: uppercase; letter-spacing: .08em; }
 #gtrk-countdown-value { font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
 #gtrk-countdown-value.active { color: #4ade80; }
