@@ -19,13 +19,20 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
 .gtrk-btn-orange { background: #FF6900; color: #fff; }
 .gtrk-btn:hover { opacity: .85; }
-#gtrk-map { width: 100%; height: calc(100vh - 120px); background: #d4d0c8; display: block; }
-#gtrk-info { background: #fff; border: 1px solid #e5e4df; border-top: none; padding: 10px 20px; display: none; font-size: 13px; color: #333; gap: 16px; flex-wrap: wrap; }
+#gtrk-map { width: 100%; height: calc(100vh - 140px); background: #d4d0c8; display: block; }
+
+/* Info bar */
+#gtrk-info { background: #fff; border: 1px solid #e5e4df; border-top: none; display: none; flex-direction: column; }
 #gtrk-info.visible { display: flex; }
+
+.gtrk-row { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 20px; align-items: flex-start; }
+.gtrk-row-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #FF6900; padding: 6px 20px 0; }
+.gtrk-divider { border: none; border-top: 1px solid #f0efe9; margin: 0; }
+
 .gtrk-chip { display: flex; flex-direction: column; gap: 2px; }
 .gtrk-chip-label { font-size: 11px; color: #a0a09a; text-transform: uppercase; letter-spacing: .04em; }
 .gtrk-chip-value { font-weight: 600; color: #1a1a18; }
-.gtrk-chip-value.highlight { color: #FF6900; }
+
 #gtrk-foot { background: #fff; border: 1px solid #e5e4df; border-top: none; border-radius: 0; padding: 12px 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
 .gtrk-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5a5a54; }
 .gtrk-stat svg { color: #FF6900; flex-shrink: 0; }
@@ -35,7 +42,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <style>
-/* Cluster styling to match our blue theme */
 .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background-color: rgba(59,130,246,0.3); }
 .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div { background-color: rgba(59,130,246,0.7); color: #fff; font-weight: 600; }
 </style>
@@ -53,16 +59,28 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
       <a class="gtrk-btn gtrk-btn-orange" href="https://share.garmin.com/9G2GF" target="_blank" rel="noopener">Garmin map ↗</a>
     </div>
   </div>
+
   <div id="gtrk-info">
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Last Seen</span><span class="gtrk-chip-value" id="gtrk-time">—</span></div>
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Coordinates</span><span class="gtrk-chip-value" id="gtrk-coords">—</span></div>
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Elevation</span><span class="gtrk-chip-value" id="gtrk-elev">—</span></div>
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Speed (last ping)</span><span class="gtrk-chip-value" id="gtrk-speed-last">—</span></div>
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Highest Elevation</span><span class="gtrk-chip-value highlight" id="gtrk-elev-high">—</span></div>
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Lowest Elevation</span><span class="gtrk-chip-value" id="gtrk-elev-low">—</span></div>
-    <div class="gtrk-chip"><span class="gtrk-chip-label">Speed (trip avg)</span><span class="gtrk-chip-value" id="gtrk-speed-avg">—</span></div>
+    <!-- Row 1: Last known position -->
+    <div class="gtrk-row-label">Last Known Position</div>
+    <div class="gtrk-row">
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Last Seen</span><span class="gtrk-chip-value" id="gtrk-time">—</span></div>
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Coordinates</span><span class="gtrk-chip-value" id="gtrk-coords">—</span></div>
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Elevation</span><span class="gtrk-chip-value" id="gtrk-elev">—</span></div>
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Speed</span><span class="gtrk-chip-value" id="gtrk-speed-last">—</span></div>
+    </div>
+    <hr class="gtrk-divider"/>
+    <!-- Row 2: Trip stats -->
+    <div class="gtrk-row-label">Trip Stats</div>
+    <div class="gtrk-row">
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Lowest Elevation</span><span class="gtrk-chip-value" id="gtrk-elev-low">—</span></div>
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Highest Elevation</span><span class="gtrk-chip-value" id="gtrk-elev-high">—</span></div>
+      <div class="gtrk-chip"><span class="gtrk-chip-label">Avg Speed</span><span class="gtrk-chip-value" id="gtrk-speed-avg">—</span></div>
+    </div>
   </div>
+
   <div id="gtrk-map"></div>
+
   <div id="gtrk-foot">
     <div style="display:flex;gap:18px;flex-wrap:wrap">
       <span class="gtrk-stat">
@@ -81,7 +99,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-// Global scope so showFullTrack and map are accessible from button onclick
 var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: true });
 var trackBounds = null;
 
@@ -89,7 +106,6 @@ window.showFullTrack = function() {
   if (trackBounds) map.fitBounds(trackBounds, { padding: [30, 30] });
 };
 
-// Esri World Topo
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
   maxZoom: 18
@@ -262,11 +278,9 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
 
         clearLayers();
 
-        // Track line
         trackLine = L.polyline(points, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
         trackBounds = trackLine.getBounds();
 
-        // Set view then draw arrows
         var last = points[points.length - 1];
         map.setView(last, 12);
         drawArrows(points);
@@ -276,7 +290,7 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
         startMarker = L.marker(offsetLatLng(L.latLng(first.lat, first.lng), -18, 0), { icon: startIcon, zIndexOffset: 900 }).addTo(map);
         startMarker.bindPopup('<b>🟢 Start</b><br>' + formatTime(first.time) + '<br>' + formatElev(first.elev));
 
-        // Finish marker offset right
+        // Finish or live position
         var d2Date = new Date(d2);
         var isLive = d2Date > new Date(Date.now() - 60000);
         if (isLive) {
@@ -292,7 +306,6 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
           maxClusterRadius: 40,
           disableClusteringAtZoom: 14
         });
-
         allPoints.forEach(function(p, idx) {
           if (idx === 0) return;
           var marker;
