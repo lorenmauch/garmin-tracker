@@ -14,21 +14,124 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 @keyframes gtrk-pulse { 0% { transform: scale(.8); opacity: .5; } 100% { transform: scale(1.8); opacity: 0; } }
 #gtrk-title { font-size: 15px; font-weight: 600; }
 #gtrk-sub { font-size: 12px; color: #a0a09a; margin-top: 2px; }
-#gtrk-btns { margin-left: auto; display: flex; gap: 8px; }
+#gtrk-btns { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .gtrk-btn { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
 .gtrk-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
 .gtrk-btn-orange { background: #FF6900; color: #fff; }
 .gtrk-btn:hover { opacity: .85; }
-#gtrk-map { width: 100%; height: calc(100vh - 140px); background: #d4d0c8; display: block; }
+
+/* Map container — position relative so message panel can float */
+#gtrk-map-wrap { position: relative; }
+#gtrk-map { width: 100%; height: calc(100vh - 160px); background: #d4d0c8; display: block; }
+
+/* Floating message panel — desktop */
+#gtrk-msg-panel {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 260px;
+  background: rgba(26,26,24,0.88);
+  backdrop-filter: blur(6px);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  z-index: 1000;
+  color: #fff;
+  font-size: 12px;
+  overflow: hidden;
+}
+#gtrk-msg-panel.has-messages { display: block; }
+#gtrk-msg-header {
+  padding: 10px 14px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #FF6900;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#gtrk-msg-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+#gtrk-msg-list::-webkit-scrollbar { width: 4px; }
+#gtrk-msg-list::-webkit-scrollbar-track { background: transparent; }
+#gtrk-msg-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.gtrk-msg-item {
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: default;
+}
+.gtrk-msg-item:last-child { border-bottom: none; }
+.gtrk-msg-item.on-trail { cursor: pointer; }
+.gtrk-msg-item.on-trail:hover { background: rgba(255,255,255,0.06); }
+.gtrk-msg-time { font-size: 10px; color: #a0a09a; margin-bottom: 3px; }
+.gtrk-msg-text { color: #fff; line-height: 1.4; }
+.gtrk-msg-badge {
+  font-size: 10px;
+  margin-top: 3px;
+  color: #a0a09a;
+}
+.gtrk-msg-badge.trail { color: #4ade80; }
+#gtrk-msg-showall {
+  padding: 8px 14px;
+  text-align: center;
+  font-size: 11px;
+  color: #FF6900;
+  cursor: pointer;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+#gtrk-msg-showall:hover { background: rgba(255,255,255,0.06); }
+
+/* Mobile message panel — below info bar */
+#gtrk-msg-mobile {
+  display: none;
+  background: #fff;
+  border: 1px solid #e5e4df;
+  border-top: none;
+}
+#gtrk-msg-mobile.has-messages { display: block; }
+#gtrk-msg-mobile-header {
+  padding: 8px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #FF6900;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid #f0efe9;
+}
+#gtrk-msg-mobile-list {
+  display: none;
+  padding: 0 20px 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+#gtrk-msg-mobile-list.expanded { display: block; }
+.gtrk-msg-mobile-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0efe9;
+  font-size: 12px;
+}
+.gtrk-msg-mobile-item:last-child { border-bottom: none; }
+.gtrk-msg-mobile-time { font-size: 11px; color: #a0a09a; margin-bottom: 2px; }
+.gtrk-msg-mobile-text { color: #1a1a18; line-height: 1.4; }
+.gtrk-msg-mobile-badge { font-size: 10px; color: #a0a09a; margin-top: 2px; }
+.gtrk-msg-mobile-badge.trail { color: #22c55e; }
 
 /* Info bar */
 #gtrk-info { background: #fff; border: 1px solid #e5e4df; border-top: none; display: none; flex-direction: column; }
 #gtrk-info.visible { display: flex; }
-
 .gtrk-row { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 20px; align-items: flex-start; }
 .gtrk-row-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #FF6900; padding: 6px 20px 0; }
 .gtrk-divider { border: none; border-top: 1px solid #f0efe9; margin: 0; }
-
 .gtrk-chip { display: flex; flex-direction: column; gap: 2px; }
 .gtrk-chip-label { font-size: 11px; color: #a0a09a; text-transform: uppercase; letter-spacing: .04em; }
 .gtrk-chip-value { font-weight: 600; color: #1a1a18; }
@@ -37,6 +140,15 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5a5a54; }
 .gtrk-stat svg { color: #FF6900; flex-shrink: 0; }
 #gtrk-status { font-size: 12px; color: #a0a09a; }
+
+/* Hide mobile panel on desktop, hide desktop panel on mobile */
+@media (max-width: 600px) {
+  #gtrk-msg-panel { display: none !important; }
+  #gtrk-msg-mobile.has-messages { display: block; }
+}
+@media (min-width: 601px) {
+  #gtrk-msg-mobile { display: none !important; }
+}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -61,7 +173,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
   </div>
 
   <div id="gtrk-info">
-    <!-- Row 1: Last known position -->
     <div class="gtrk-row-label">Last Known Position</div>
     <div class="gtrk-row">
       <div class="gtrk-chip"><span class="gtrk-chip-label">Last Seen</span><span class="gtrk-chip-value" id="gtrk-time">—</span></div>
@@ -70,7 +181,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
       <div class="gtrk-chip"><span class="gtrk-chip-label">Speed</span><span class="gtrk-chip-value" id="gtrk-speed-last">—</span></div>
     </div>
     <hr class="gtrk-divider"/>
-    <!-- Row 2: Trip stats -->
     <div class="gtrk-row-label">Trip Stats</div>
     <div class="gtrk-row">
       <div class="gtrk-chip"><span class="gtrk-chip-label">Lowest Elevation</span><span class="gtrk-chip-value" id="gtrk-elev-low">—</span></div>
@@ -79,7 +189,29 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     </div>
   </div>
 
-  <div id="gtrk-map"></div>
+  <!-- Mobile message panel (below info bar) -->
+  <div id="gtrk-msg-mobile">
+    <div id="gtrk-msg-mobile-header" onclick="window.toggleMobileMessages()">
+      <span>Messages from the Trail</span>
+      <span id="gtrk-msg-mobile-count"></span>
+    </div>
+    <div id="gtrk-msg-mobile-list"></div>
+  </div>
+
+  <!-- Map with floating desktop message panel -->
+  <div id="gtrk-map-wrap">
+    <div id="gtrk-map"></div>
+
+    <!-- Desktop floating message panel -->
+    <div id="gtrk-msg-panel">
+      <div id="gtrk-msg-header">
+        <span>Messages from the Trail</span>
+        <span id="gtrk-msg-count" style="font-size:10px;color:#a0a09a;font-weight:400;text-transform:none;letter-spacing:0"></span>
+      </div>
+      <div id="gtrk-msg-list"></div>
+      <div id="gtrk-msg-showall" style="display:none" onclick="window.showAllMessages()">Show all messages</div>
+    </div>
+  </div>
 
   <div id="gtrk-foot">
     <div style="display:flex;gap:18px;flex-wrap:wrap">
@@ -101,15 +233,147 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 <script>
 var map = L.map('gtrk-map', { zoomControl: true, scrollWheelZoom: true });
 var trackBounds = null;
+var allMessages = [];
+var PREVIEW_COUNT = 5;
+var showingAll = false;
 
 window.showFullTrack = function() {
   if (trackBounds) map.fitBounds(trackBounds, { padding: [30, 30] });
+};
+
+window.toggleMobileMessages = function() {
+  var list = document.getElementById('gtrk-msg-mobile-list');
+  var count = document.getElementById('gtrk-msg-mobile-count');
+  list.classList.toggle('expanded');
+  count.textContent = list.classList.contains('expanded') ? '▲' : '▼ ' + allMessages.length;
+};
+
+window.showAllMessages = function() {
+  showingAll = true;
+  renderMessages();
+};
+
+window.panToMessage = function(lat, lng) {
+  map.setView([lat, lng], 14);
 };
 
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
   maxZoom: 18
 }).addTo(map);
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatElev(meters) {
+  if (!meters && meters !== 0) return '—';
+  var ft = Math.round(parseFloat(meters) * 3.28084);
+  return ft.toLocaleString() + ' ft';
+}
+
+function formatSpeed(kmh) {
+  if (!kmh || parseFloat(kmh) === 0) return 'Stopped';
+  return (parseFloat(kmh) * 0.621371).toFixed(1) + ' mph';
+}
+
+function formatCourse(degrees) {
+  if (!degrees) return '—';
+  var deg = parseFloat(degrees);
+  var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16] + ' ' + Math.round(deg) + '°';
+}
+
+function tripAvgSpeed(allPoints) {
+  var moving = allPoints.filter(function(p) { return p.speed && parseFloat(p.speed) > 0; });
+  if (moving.length === 0) return '—';
+  var total = moving.reduce(function(sum, p) { return sum + parseFloat(p.speed); }, 0);
+  return ((total / moving.length) * 0.621371).toFixed(1) + ' mph';
+}
+
+function offsetLatLng(latlng, dx, dy) {
+  var pt = map.latLngToContainerPoint(latlng);
+  return map.containerPointToLatLng([pt.x + dx, pt.y + dy]);
+}
+
+function isOffTrail(msg) {
+  return msg && msg.charAt(0) === '#';
+}
+
+function cleanMsg(msg) {
+  return isOffTrail(msg) ? msg.substring(1).trim() : msg;
+}
+
+function renderMessages() {
+  var panel = document.getElementById('gtrk-msg-panel');
+  var list = document.getElementById('gtrk-msg-list');
+  var countEl = document.getElementById('gtrk-msg-count');
+  var showAll = document.getElementById('gtrk-msg-showall');
+  var mobilePanel = document.getElementById('gtrk-msg-mobile');
+  var mobileList = document.getElementById('gtrk-msg-mobile-list');
+  var mobileCount = document.getElementById('gtrk-msg-mobile-count');
+
+  if (allMessages.length === 0) {
+    panel.classList.remove('has-messages');
+    mobilePanel.classList.remove('has-messages');
+    return;
+  }
+
+  panel.classList.add('has-messages');
+  mobilePanel.classList.add('has-messages');
+  countEl.textContent = allMessages.length + ' message' + (allMessages.length > 1 ? 's' : '');
+  mobileCount.textContent = '▼ ' + allMessages.length;
+
+  // Sort newest first
+  var sorted = allMessages.slice().sort(function(a, b) {
+    return new Date(b.time) - new Date(a.time);
+  });
+
+  var toShow = showingAll ? sorted : sorted.slice(0, PREVIEW_COUNT);
+
+  // Desktop panel
+  list.innerHTML = '';
+  toShow.forEach(function(m) {
+    var offTrail = isOffTrail(m.msg);
+    var div = document.createElement('div');
+    div.className = 'gtrk-msg-item' + (offTrail ? '' : ' on-trail');
+    if (!offTrail) {
+      div.onclick = function() { window.panToMessage(m.lat, m.lng); };
+    }
+    div.innerHTML =
+      '<div class="gtrk-msg-time">' + formatTime(m.time) + '</div>' +
+      '<div class="gtrk-msg-text">' + cleanMsg(m.msg) + '</div>' +
+      '<div class="gtrk-msg-badge' + (offTrail ? '' : ' trail') + '">' +
+      (offTrail ? '🏙️ Off trail' : '📍 On trail — tap to locate') +
+      '</div>';
+    list.appendChild(div);
+  });
+
+  if (!showingAll && allMessages.length > PREVIEW_COUNT) {
+    showAll.style.display = 'block';
+    showAll.textContent = 'Show all ' + allMessages.length + ' messages';
+  } else {
+    showAll.style.display = 'none';
+  }
+
+  // Mobile panel
+  mobileList.innerHTML = '';
+  toShow.forEach(function(m) {
+    var offTrail = isOffTrail(m.msg);
+    var div = document.createElement('div');
+    div.className = 'gtrk-msg-mobile-item';
+    div.innerHTML =
+      '<div class="gtrk-msg-mobile-time">' + formatTime(m.time) + '</div>' +
+      '<div class="gtrk-msg-mobile-text">' + cleanMsg(m.msg) + '</div>' +
+      '<div class="gtrk-msg-mobile-badge' + (offTrail ? '' : ' trail') + '">' +
+      (offTrail ? '🏙️ Off trail' : '📍 On trail') +
+      '</div>';
+    mobileList.appendChild(div);
+  });
+}
 
 (function() {
   // ---- UPDATE THIS for each trip ----
@@ -135,44 +399,6 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
     return result;
   }
 
-  function formatTime(iso) {
-    if (!iso) return '—';
-    var d = new Date(iso);
-    if (isNaN(d)) return iso;
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
-
-  function formatElev(meters) {
-    if (!meters && meters !== 0) return '—';
-    var ft = Math.round(parseFloat(meters) * 3.28084);
-    return ft.toLocaleString() + ' ft';
-  }
-
-  function formatSpeed(kmh) {
-    if (!kmh || parseFloat(kmh) === 0) return 'Stopped';
-    return (parseFloat(kmh) * 0.621371).toFixed(1) + ' mph';
-  }
-
-  function formatCourse(degrees) {
-    if (!degrees) return '—';
-    var deg = parseFloat(degrees);
-    var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-    var dir = dirs[Math.round(deg / 22.5) % 16];
-    return dir + ' ' + Math.round(deg) + '°';
-  }
-
-  function tripAvgSpeed(allPoints) {
-    var moving = allPoints.filter(function(p) { return p.speed && parseFloat(p.speed) > 0; });
-    if (moving.length === 0) return '—';
-    var total = moving.reduce(function(sum, p) { return sum + parseFloat(p.speed); }, 0);
-    return ((total / moving.length) * 0.621371).toFixed(1) + ' mph';
-  }
-
-  function offsetLatLng(latlng, dx, dy) {
-    var pt = map.latLngToContainerPoint(latlng);
-    return map.containerPointToLatLng([pt.x + dx, pt.y + dy]);
-  }
-
   var posIcon = L.divIcon({
     html: '<div style="width:16px;height:16px;background:#FF6900;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(255,105,0,.3)"></div>',
     iconSize: [16, 16], iconAnchor: [8, 8], className: ''
@@ -182,8 +408,8 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
     iconSize: [10, 10], iconAnchor: [5, 5], className: ''
   });
   var msgIcon = L.divIcon({
-    html: '<div style="width:12px;height:12px;background:#3b82f6;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(59,130,246,.3)"></div>',
-    iconSize: [12, 12], iconAnchor: [6, 6], className: ''
+    html: '<div style="width:14px;height:14px;background:#22c55e;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(34,197,94,.3)"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7], className: ''
   });
   var startIcon = L.divIcon({
     html: '<div style="width:28px;height:28px;background:#22c55e;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3)">S</div>',
@@ -195,7 +421,7 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
   });
 
   var trackLine = null, posMarker = null, startMarker = null, finishMarker = null;
-  var clusterGroup = null, msgMarkers = [], arrowMarkers = [], allPoints = [];
+  var clusterGroup = null, arrowMarkers = [], allPoints = [];
 
   function clearLayers() {
     if (trackLine) map.removeLayer(trackLine);
@@ -203,9 +429,8 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
     if (startMarker) map.removeLayer(startMarker);
     if (finishMarker) map.removeLayer(finishMarker);
     if (clusterGroup) map.removeLayer(clusterGroup);
-    msgMarkers.forEach(function(m) { map.removeLayer(m); });
     arrowMarkers.forEach(function(m) { map.removeLayer(m); });
-    msgMarkers = []; arrowMarkers = [];
+    arrowMarkers = [];
   }
 
   function drawArrows(points) {
@@ -251,6 +476,7 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
         var placemarks = doc.getElementsByTagName('Placemark');
         var points = [];
         allPoints = [];
+        allMessages = [];
         var latestPm = null, latestTime = 0;
 
         for (var i = 0; i < placemarks.length; i++) {
@@ -264,8 +490,15 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
           if (isNaN(lat) || isNaN(lng)) continue;
           var when = getTagText(pm, 'when') || getTagText(pm, 'TimeStamp');
           var ext = parseExtData(pm);
+          var msg = ext['Text'] || '';
           points.push([lat, lng]);
-          allPoints.push({ lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], course: ext['Course'], msg: ext['Text'] || '' });
+          allPoints.push({ lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], course: ext['Course'], msg: msg });
+
+          // Collect messages
+          if (msg) {
+            allMessages.push({ lat: lat, lng: lng, time: when, msg: msg });
+          }
+
           var t = when ? new Date(when).getTime() : 0;
           if (t > latestTime) { latestTime = t; latestPm = allPoints[allPoints.length - 1]; }
         }
@@ -285,12 +518,12 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
         map.setView(last, 12);
         drawArrows(points);
 
-        // Start marker offset left
+        // Start marker
         var first = allPoints[0];
         startMarker = L.marker(offsetLatLng(L.latLng(first.lat, first.lng), -18, 0), { icon: startIcon, zIndexOffset: 900 }).addTo(map);
         startMarker.bindPopup('<b>🟢 Start</b><br>' + formatTime(first.time) + '<br>' + formatElev(first.elev));
 
-        // Finish or live position
+        // Finish or live
         var d2Date = new Date(d2);
         var isLive = d2Date > new Date(Date.now() - 60000);
         if (isLive) {
@@ -301,18 +534,15 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
           if (latestPm) finishMarker.bindPopup('<b>🔴 Finish</b><br>' + formatTime(latestPm.time) + '<br>' + formatElev(latestPm.elev));
         }
 
-        // Clustered ping markers
-        clusterGroup = L.markerClusterGroup({
-          maxClusterRadius: 40,
-          disableClusteringAtZoom: 14
-        });
+        // Clustered ping markers — on-trail messages get green dot
+        clusterGroup = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 14 });
         allPoints.forEach(function(p, idx) {
           if (idx === 0) return;
           var marker;
-          if (p.msg) {
+          var hasMsg = p.msg && !isOffTrail(p.msg);
+          if (hasMsg) {
             marker = L.marker([p.lat, p.lng], { icon: msgIcon });
-            marker.bindPopup('<b>📍 Message</b><br>' + buildPopup(p) + '<br><i>' + p.msg + '</i>');
-            msgMarkers.push(marker);
+            marker.bindPopup('<b>📍 ' + formatTime(p.time) + '</b><br>' + cleanMsg(p.msg) + '<br><br>' + buildPopup(p));
           } else {
             marker = L.marker([p.lat, p.lng], { icon: pingIcon });
             marker.bindPopup(buildPopup(p));
@@ -338,10 +568,13 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map
           document.getElementById('gtrk-info').classList.add('visible');
         }
 
+        // Render messages
+        showingAll = false;
+        renderMessages();
+
         var pts = points.length;
-        var msgs = msgMarkers.length;
         document.getElementById('gtrk-status').textContent =
-          pts + ' track points' + (msgs > 0 ? ' · ' + msgs + ' message' + (msgs > 1 ? 's' : '') : '') + ' · Auto-refreshes every 10 min';
+          pts + ' track points' + (allMessages.length > 0 ? ' · ' + allMessages.length + ' message' + (allMessages.length > 1 ? 's' : '') : '') + ' · Auto-refreshes every 10 min';
       })
       .catch(function(err) {
         document.getElementById('gtrk-status').textContent = 'Could not load track.';
