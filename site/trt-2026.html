@@ -8,12 +8,23 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 #gtrk { max-width: 100%; margin: 0 auto; }
-#gtrk-head { background: #1a1a18; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-radius: 0; flex-wrap: wrap; }
+#gtrk-head { background: #1a1a18; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-radius: 0; flex-wrap: wrap; position: relative; }
 #gtrk-dot { width: 10px; height: 10px; border-radius: 50%; background: #4ade80; flex-shrink: 0; position: relative; }
 #gtrk-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #4ade80; opacity: .5; animation: gtrk-pulse 2s ease-out infinite; }
 @keyframes gtrk-pulse { 0% { transform: scale(.8); opacity: .5; } 100% { transform: scale(1.8); opacity: 0; } }
 #gtrk-title { font-size: 15px; font-weight: 600; }
 #gtrk-sub { font-size: 12px; color: #a0a09a; margin-top: 2px; }
+#gtrk-countdown {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+#gtrk-countdown-label { font-size: 10px; color: #a0a09a; text-transform: uppercase; letter-spacing: .08em; }
+#gtrk-countdown-value { font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
+#gtrk-countdown-value.active { color: #4ade80; }
+#gtrk-countdown-value.complete { color: #a0a09a; }
 #gtrk-btns { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .gtrk-btn { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
 .gtrk-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
@@ -99,6 +110,7 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 @media (max-width: 600px) {
   #gtrk-msg-panel { display: none !important; }
   #gtrk-msg-mobile.has-messages { display: block; }
+  #gtrk-countdown { display: none; }
 }
 @media (min-width: 601px) {
   #gtrk-msg-mobile { display: none !important; }
@@ -119,6 +131,10 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     <div>
       <div id="gtrk-title">Loren &ldquo;Butterfingers&rdquo; on Trail</div>
       <div id="gtrk-sub">Live inReach satellite tracking &middot; Tahoe Rim Trail 2026</div>
+    </div>
+    <div id="gtrk-countdown">
+      <div id="gtrk-countdown-label">—</div>
+      <div id="gtrk-countdown-value">—</div>
     </div>
     <div id="gtrk-btns">
       <button class="gtrk-btn gtrk-btn-ghost" onclick="window.showFullTrack()">Show full track</button>
@@ -209,6 +225,39 @@ window.panToMessage = function(lat, lng) {
   map.setView([lat, lng], 14);
 };
 
+// ---- Countdown/countup clock ----
+var TRIP_START = new Date('2026-07-11T19:50:00Z'); // Jul 11 12:50pm PDT
+var TRIP_END   = new Date('2026-07-19T01:32:00Z'); // Jul 18 6:32pm PDT
+
+function updateClock() {
+  var now = new Date();
+  var label = document.getElementById('gtrk-countdown-label');
+  var value = document.getElementById('gtrk-countdown-value');
+
+  if (now < TRIP_START) {
+    var diff = TRIP_START - now;
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    label.textContent = 'Starts in';
+    value.textContent = days + (days === 1 ? ' day' : ' days');
+    value.className = '';
+  } else if (now >= TRIP_START && now <= TRIP_END) {
+    var diff = now - TRIP_START;
+    var day = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+    label.textContent = 'On Trail';
+    value.textContent = 'Day ' + day;
+    value.className = 'active';
+  } else {
+    var diff = TRIP_END - TRIP_START;
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    label.textContent = 'Completed';
+    value.textContent = days + (days === 1 ? ' day' : ' days') + ' on trail';
+    value.className = 'complete';
+  }
+}
+
+updateClock();
+setInterval(updateClock, 60000);
+
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
   maxZoom: 18
@@ -283,7 +332,6 @@ function renderMessages() {
   });
   var toShow = showingAll ? sorted : sorted.slice(0, PREVIEW_COUNT);
 
-  // Desktop panel
   list.innerHTML = '';
   toShow.forEach(function(m) {
     var offTrail = isOffTrail(m.msg);
@@ -306,7 +354,6 @@ function renderMessages() {
     showAll.style.display = 'none';
   }
 
-  // Mobile panel
   mobileList.innerHTML = '';
   toShow.forEach(function(m) {
     var offTrail = isOffTrail(m.msg);
@@ -353,7 +400,6 @@ function renderMessages() {
     ].join('<br>');
   }
 
-  // Icons
   var posIcon = L.divIcon({
     html: '<div style="width:16px;height:16px;background:#FF6900;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(255,105,0,.3)"></div>',
     iconSize: [16, 16], iconAnchor: [8, 8], className: ''
@@ -362,7 +408,6 @@ function renderMessages() {
     html: '<div style="width:10px;height:10px;background:#3b82f6;border:1.5px solid #fff;border-radius:50%;opacity:0.7"></div>',
     iconSize: [10, 10], iconAnchor: [5, 5], className: ''
   });
-  // Orange pin for messages with location
   var pinIcon = L.divIcon({
     html: '<div style="font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));">📍</div>',
     iconSize: [20, 20], iconAnchor: [10, 20], className: ''
@@ -417,9 +462,8 @@ function renderMessages() {
         var parser = new DOMParser();
         var doc = parser.parseFromString(xml, 'text/xml');
         var placemarks = doc.getElementsByTagName('Placemark');
-        // Separate tracking points from message points
-        var trackPoints = [];   // pings with no message — form the route
-        var msgPoints = [];     // pings with messages — pins, not part of route
+        var trackPoints = [];
+        var msgPoints = [];
         allPoints = [];
         allMessages = [];
         var latestPm = null, latestTime = 0;
@@ -441,11 +485,9 @@ function renderMessages() {
           allPoints.push(point);
 
           if (msg) {
-            // Has a message — goes to message pins, NOT the route
             msgPoints.push(point);
             allMessages.push({ lat: lat, lng: lng, time: when, msg: msg });
           } else {
-            // No message — part of the route
             trackPoints.push([lat, lng]);
           }
 
@@ -461,7 +503,6 @@ function renderMessages() {
 
         clearLayers();
 
-        // Draw route from tracking points only (no message pings)
         if (trackPoints.length > 1) {
           trackLine = L.polyline(trackPoints, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
           trackBounds = trackLine.getBounds();
@@ -469,11 +510,9 @@ function renderMessages() {
           map.setView(last, 12);
           drawArrows(trackPoints);
 
-          // Start marker
           startMarker = L.marker(offsetLatLng(L.latLng(trackPoints[0][0], trackPoints[0][1]), -18, 0), { icon: startIcon, zIndexOffset: 900 }).addTo(map);
           startMarker.bindPopup('<b>🟢 Start</b><br>' + formatTime(allPoints[0].time) + '<br>' + formatElev(allPoints[0].elev));
 
-          // Finish or live position
           var d2Date = new Date(d2);
           var isLive = d2Date > new Date(Date.now() - 60000);
           if (isLive) {
@@ -485,22 +524,18 @@ function renderMessages() {
           }
         }
 
-        // Clustered markers
         clusterGroup = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 14 });
 
-        // Regular ping dots (no message)
         trackPoints.forEach(function(pt, idx) {
-          if (idx === 0) return; // skip start
+          if (idx === 0) return;
           var marker = L.marker(pt, { icon: pingIcon });
-          // Find matching allPoints entry for popup data
           var p = allPoints.find(function(ap) { return ap.lat === pt[0] && ap.lng === pt[1] && !ap.msg; });
           if (p) marker.bindPopup(buildPopup(p));
           clusterGroup.addLayer(marker);
         });
 
-        // Message pins — orange pin icon, not part of route
         msgPoints.forEach(function(p) {
-          if (isOffTrail(p.msg)) return; // # messages: no map marker
+          if (isOffTrail(p.msg)) return;
           var marker = L.marker([p.lat, p.lng], { icon: pinIcon, zIndexOffset: 800 });
           marker.bindPopup(
             '<b>' + cleanMsg(p.msg) + '</b><br>' +
@@ -512,12 +547,10 @@ function renderMessages() {
 
         map.addLayer(clusterGroup);
 
-        // Elevation stats from all points
         var elevations = allPoints.filter(function(p) { return p.elev; }).map(function(p) { return parseFloat(p.elev); });
         var highElev = elevations.length ? Math.max.apply(null, elevations) : null;
         var lowElev = elevations.length ? Math.min.apply(null, elevations) : null;
 
-        // Update info bar
         if (latestPm) {
           document.getElementById('gtrk-time').textContent = formatTime(latestPm.time);
           document.getElementById('gtrk-coords').textContent = latestPm.lat.toFixed(4) + '°, ' + latestPm.lng.toFixed(4) + '°';
