@@ -247,12 +247,12 @@ fetch('/pct-lash-route.geojson')
   .then(function(r) { return r.json(); })
   .then(function(geojson) {
     routeLayer = L.geoJSON(geojson, {
-      style: {
-        color: '#9333ea',
-        weight: 2.5,
-        opacity: 0.6,
-        dashArray: '6 4'
-      }
+     style: {
+      color: '#ef4444',
+      weight: 4,
+      opacity: 0.7,
+      dashArray: '6 4'
+    }
     }).addTo(map);
     // Set initial view to show full route before track loads
     map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
