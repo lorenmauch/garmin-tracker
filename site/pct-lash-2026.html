@@ -32,8 +32,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-btn:hover { opacity: .85; }
 #gtrk-map-wrap { position: relative; }
 #gtrk-map { width: 100%; height: calc(100vh - 160px); background: #d4d0c8; display: block; }
-
-/* Floating message panel */
 #gtrk-msg-panel {
   display: none;
   position: absolute;
@@ -64,36 +62,19 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-msg-item:last-child { border-bottom: none; }
 .gtrk-msg-time { font-size: 10px; color: #a0a09a; margin-bottom: 3px; }
 .gtrk-msg-text { color: #fff; line-height: 1.4; }
-.gtrk-msg-locate {
-  font-size: 10px; margin-top: 4px;
-  color: #FF6900; cursor: pointer;
-  text-decoration: underline;
-}
+.gtrk-msg-locate { font-size: 10px; margin-top: 4px; color: #FF6900; cursor: pointer; text-decoration: underline; }
 .gtrk-msg-locate:hover { opacity: .8; }
-#gtrk-msg-showall {
-  padding: 8px 14px; text-align: center;
-  font-size: 11px; color: #FF6900; cursor: pointer;
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
+#gtrk-msg-showall { padding: 8px 14px; text-align: center; font-size: 11px; color: #FF6900; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1); }
 #gtrk-msg-showall:hover { background: rgba(255,255,255,0.06); }
-
-/* Mobile message panel */
 #gtrk-msg-mobile { display: none; background: #fff; border: 1px solid #e5e4df; border-top: none; }
 #gtrk-msg-mobile.has-messages { display: block; }
-#gtrk-msg-mobile-header {
-  padding: 8px 20px; font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em; color: #FF6900;
-  display: flex; justify-content: space-between; align-items: center;
-  cursor: pointer; border-bottom: 1px solid #f0efe9;
-}
+#gtrk-msg-mobile-header { padding: 8px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #FF6900; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #f0efe9; }
 #gtrk-msg-mobile-list { display: none; padding: 0 20px 8px; max-height: 180px; overflow-y: auto; }
 #gtrk-msg-mobile-list.expanded { display: block; }
 .gtrk-msg-mobile-item { padding: 8px 0; border-bottom: 1px solid #f0efe9; font-size: 12px; }
 .gtrk-msg-mobile-item:last-child { border-bottom: none; }
 .gtrk-msg-mobile-time { font-size: 11px; color: #a0a09a; margin-bottom: 2px; }
 .gtrk-msg-mobile-text { color: #1a1a18; line-height: 1.4; }
-
-/* Info bar */
 #gtrk-info { background: #fff; border: 1px solid #e5e4df; border-top: none; display: none; flex-direction: column; }
 #gtrk-info.visible { display: flex; }
 .gtrk-row { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 20px; }
@@ -106,7 +87,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 .gtrk-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5a5a54; }
 .gtrk-stat svg { color: #FF6900; }
 #gtrk-status { font-size: 12px; color: #a0a09a; }
-
 @media (max-width: 600px) {
   #gtrk-msg-panel { display: none !important; }
   #gtrk-msg-mobile.has-messages { display: block; }
@@ -159,7 +139,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
     </div>
   </div>
 
-  <!-- Mobile messages -->
   <div id="gtrk-msg-mobile">
     <div id="gtrk-msg-mobile-header" onclick="window.toggleMobileMessages()">
       <span>Messages from the Trail</span>
@@ -170,7 +149,6 @@ body { background: transparent; font-family: -apple-system, BlinkMacSystemFont, 
 
   <div id="gtrk-map-wrap">
     <div id="gtrk-map"></div>
-    <!-- Desktop floating messages -->
     <div id="gtrk-msg-panel">
       <div id="gtrk-msg-header">
         <span>Messages from the Trail</span>
@@ -227,13 +205,12 @@ window.panToMessage = function(lat, lng) {
 
 // ---- Countdown/countup clock ----
 var TRIP_START = new Date('2026-08-24T19:00:00Z'); // Aug 24 12:00pm PDT
-var TRIP_END   = new Date('2026-09-24T19:00:00Z'); // Sep 20 12:00pm PDT
+var TRIP_END   = new Date('2026-09-21T19:00:00Z'); // Sep 20 12:00pm PDT
 
 function updateClock() {
   var now = new Date();
   var label = document.getElementById('gtrk-countdown-label');
   var value = document.getElementById('gtrk-countdown-value');
-
   if (now < TRIP_START) {
     var diff = TRIP_START - now;
     var days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -258,10 +235,32 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 60000);
 
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
-  maxZoom: 18
+// Map tiles
+L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © <a href="https://usgs.gov/">USGS</a>',
+  maxZoom: 16
 }).addTo(map);
+
+// ---- Load planned PCT route ----
+var routeLayer = null;
+fetch('/pct-lash-route.geojson')
+  .then(function(r) { return r.json(); })
+  .then(function(geojson) {
+    routeLayer = L.geoJSON(geojson, {
+      style: {
+        color: '#9333ea',
+        weight: 2.5,
+        opacity: 0.6,
+        dashArray: '6 4'
+      }
+    }).addTo(map);
+    // Set initial view to show full route before track loads
+    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+  })
+  .catch(function(err) {
+    console.warn('Could not load route overlay:', err);
+    map.setView([38.5, -120.0], 8);
+  });
 
 function formatTime(iso) {
   if (!iso) return '—';
@@ -299,13 +298,8 @@ function offsetLatLng(latlng, dx, dy) {
   return map.containerPointToLatLng([pt.x + dx, pt.y + dy]);
 }
 
-function isOffTrail(msg) {
-  return msg && msg.charAt(0) === '#';
-}
-
-function cleanMsg(msg) {
-  return isOffTrail(msg) ? msg.substring(1).trim() : msg;
-}
+function isOffTrail(msg) { return msg && msg.charAt(0) === '#'; }
+function cleanMsg(msg) { return isOffTrail(msg) ? msg.substring(1).trim() : msg; }
 
 function renderMessages() {
   var panel = document.getElementById('gtrk-msg-panel');
@@ -327,9 +321,7 @@ function renderMessages() {
   countEl.textContent = allMessages.length + ' message' + (allMessages.length > 1 ? 's' : '');
   mobileCount.textContent = '▼ ' + allMessages.length;
 
-  var sorted = allMessages.slice().sort(function(a, b) {
-    return new Date(b.time) - new Date(a.time);
-  });
+  var sorted = allMessages.slice().sort(function(a, b) { return new Date(b.time) - new Date(a.time); });
   var toShow = showingAll ? sorted : sorted.slice(0, PREVIEW_COUNT);
 
   list.innerHTML = '';
@@ -337,12 +329,9 @@ function renderMessages() {
     var offTrail = isOffTrail(m.msg);
     var div = document.createElement('div');
     div.className = 'gtrk-msg-item';
-    var html =
-      '<div class="gtrk-msg-time">' + formatTime(m.time) + '</div>' +
-      '<div class="gtrk-msg-text">' + cleanMsg(m.msg) + '</div>';
-    if (!offTrail) {
-      html += '<div class="gtrk-msg-locate" onclick="window.panToMessage(' + m.lat + ',' + m.lng + ')">📍 Locate on map</div>';
-    }
+    var html = '<div class="gtrk-msg-time">' + formatTime(m.time) + '</div>' +
+               '<div class="gtrk-msg-text">' + cleanMsg(m.msg) + '</div>';
+    if (!offTrail) html += '<div class="gtrk-msg-locate" onclick="window.panToMessage(' + m.lat + ',' + m.lng + ')">📍 Locate on map</div>';
     div.innerHTML = html;
     list.appendChild(div);
   });
@@ -359,10 +348,9 @@ function renderMessages() {
     var offTrail = isOffTrail(m.msg);
     var div = document.createElement('div');
     div.className = 'gtrk-msg-mobile-item';
-    div.innerHTML =
-      '<div class="gtrk-msg-mobile-time">' + formatTime(m.time) + '</div>' +
-      '<div class="gtrk-msg-mobile-text">' + cleanMsg(m.msg) + '</div>' +
-      (offTrail ? '' : '<div class="gtrk-msg-mobile-badge trail">📍 On trail</div>');
+    div.innerHTML = '<div class="gtrk-msg-mobile-time">' + formatTime(m.time) + '</div>' +
+                    '<div class="gtrk-msg-mobile-text">' + cleanMsg(m.msg) + '</div>' +
+                    (offTrail ? '' : '<div class="gtrk-msg-mobile-badge trail">📍 On trail</div>');
     mobileList.appendChild(div);
   });
 }
@@ -370,7 +358,7 @@ function renderMessages() {
 (function() {
   // ---- UPDATE THIS for each trip ----
   var d1 = '2026-08-24T00:00:00Z';
-  var d2 = '2026-07-31T23:59:59Z';
+  var d2 = '2026-09-20T23:59:59Z';
   // ------------------------------------
 
   var PROXY = '/garmin-proxy';
@@ -392,12 +380,10 @@ function renderMessages() {
   }
 
   function buildPopup(p) {
-    return [
-      '<b>' + formatTime(p.time) + '</b>',
-      'Elevation: ' + formatElev(p.elev),
-      'Speed: ' + formatSpeed(p.speed),
-      'Heading: ' + formatCourse(p.course)
-    ].join('<br>');
+    return ['<b>' + formatTime(p.time) + '</b>',
+            'Elevation: ' + formatElev(p.elev),
+            'Speed: ' + formatSpeed(p.speed),
+            'Heading: ' + formatCourse(p.course)].join('<br>');
   }
 
   var posIcon = L.divIcon({
@@ -462,10 +448,8 @@ function renderMessages() {
         var parser = new DOMParser();
         var doc = parser.parseFromString(xml, 'text/xml');
         var placemarks = doc.getElementsByTagName('Placemark');
-        var trackPoints = [];
-        var msgPoints = [];
-        allPoints = [];
-        allMessages = [];
+        var trackPoints = [], msgPoints = [];
+        allPoints = []; allMessages = [];
         var latestPm = null, latestTime = 0;
 
         for (var i = 0; i < placemarks.length; i++) {
@@ -480,24 +464,16 @@ function renderMessages() {
           var when = getTagText(pm, 'when') || getTagText(pm, 'TimeStamp');
           var ext = parseExtData(pm);
           var msg = ext['Text'] || '';
-
           var point = { lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], course: ext['Course'], msg: msg };
           allPoints.push(point);
-
-          if (msg) {
-            msgPoints.push(point);
-            allMessages.push({ lat: lat, lng: lng, time: when, msg: msg });
-          } else {
-            trackPoints.push([lat, lng]);
-          }
-
+          if (msg) { msgPoints.push(point); allMessages.push({ lat: lat, lng: lng, time: when, msg: msg }); }
+          else { trackPoints.push([lat, lng]); }
           var t = when ? new Date(when).getTime() : 0;
           if (!msg && t > latestTime) { latestTime = t; latestPm = point; }
         }
 
         if (allPoints.length === 0) {
           document.getElementById('gtrk-status').textContent = 'No track data yet — device not active';
-          map.setView([39.9, -121.2], 9);
           return;
         }
 
@@ -525,7 +501,6 @@ function renderMessages() {
         }
 
         clusterGroup = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 14 });
-
         trackPoints.forEach(function(pt, idx) {
           if (idx === 0) return;
           var marker = L.marker(pt, { icon: pingIcon });
@@ -533,18 +508,12 @@ function renderMessages() {
           if (p) marker.bindPopup(buildPopup(p));
           clusterGroup.addLayer(marker);
         });
-
         msgPoints.forEach(function(p) {
           if (isOffTrail(p.msg)) return;
           var marker = L.marker([p.lat, p.lng], { icon: pinIcon, zIndexOffset: 800 });
-          marker.bindPopup(
-            '<b>' + cleanMsg(p.msg) + '</b><br>' +
-            formatTime(p.time) + '<br>' +
-            'Elevation: ' + formatElev(p.elev)
-          );
+          marker.bindPopup('<b>' + cleanMsg(p.msg) + '</b><br>' + formatTime(p.time) + '<br>Elevation: ' + formatElev(p.elev));
           clusterGroup.addLayer(marker);
         });
-
         map.addLayer(clusterGroup);
 
         var elevations = allPoints.filter(function(p) { return p.elev; }).map(function(p) { return parseFloat(p.elev); });
@@ -573,7 +542,6 @@ function renderMessages() {
       .catch(function(err) {
         document.getElementById('gtrk-status').textContent = 'Could not load track.';
         console.error('Garmin tracker error:', err);
-        map.setView([39.9, -121.2], 9);
       });
   }
 
