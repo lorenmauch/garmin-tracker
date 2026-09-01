@@ -487,6 +487,8 @@ function renderMessages() {
           .slice()
           .sort(function(a, b) { return new Date(a.time) - new Date(b.time); })
           .map(function(p) { return [p.lat, p.lng]; });
+        
+       console.log('First 5 points:', allPoints.filter(function(p){return !p.msg;}).slice(0,5).map(function(p){return p.time;})); 
 
         if (linePoints.length > 1) {
           trackLine = L.polyline(linePoints, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
