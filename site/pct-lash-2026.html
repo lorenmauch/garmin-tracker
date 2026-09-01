@@ -241,8 +241,7 @@ L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapSe
   maxZoom: 16
 }).addTo(map);
 
-/*
-  // ---- Load planned PCT route ----
+// ---- Load planned PCT route ----
 var routeLayer = null;
 fetch('/pct-lash-route.geojson')
   .then(function(r) { return r.json(); })
@@ -262,7 +261,6 @@ fetch('/pct-lash-route.geojson')
     console.warn('Could not load route overlay:', err);
     map.setView([38.5, -120.0], 8);
   });
-  */
 
 function formatTime(iso) {
   if (!iso) return '—';
@@ -481,14 +479,23 @@ function renderMessages() {
 
         clearLayers();
 
-        if (trackPoints.length > 1) {
-          trackLine = L.polyline(trackPoints, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
-          trackBounds = trackLine.getBounds();
-          var last = trackPoints[trackPoints.length - 1];
-          map.setView(last, 12);
-          drawArrows(trackPoints);
+        // Build a chronologically-sorted list of track points for the line/arrows,
+        // since the feed doesn't guarantee point order and the polyline draws
+        // points in array order (unlike the cluster markers, which are spatial).
+        var linePoints = allPoints
+          .filter(function(p) { return !p.msg; })
+          .slice()
+          .sort(function(a, b) { return new Date(a.time) - new Date(b.time); })
+          .map(function(p) { return [p.lat, p.lng]; });
 
-          startMarker = L.marker(offsetLatLng(L.latLng(trackPoints[0][0], trackPoints[0][1]), -18, 0), { icon: startIcon, zIndexOffset: 900 }).addTo(map);
+        if (linePoints.length > 1) {
+          trackLine = L.polyline(linePoints, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
+          trackBounds = trackLine.getBounds();
+          var last = linePoints[linePoints.length - 1];
+          map.setView(last, 12);
+          drawArrows(linePoints);
+
+          startMarker = L.marker(offsetLatLng(L.latLng(linePoints[0][0], linePoints[0][1]), -18, 0), { icon: startIcon, zIndexOffset: 900 }).addTo(map);
           startMarker.bindPopup('<b>🟢 Start</b><br>' + formatTime(allPoints[0].time) + '<br>' + formatElev(allPoints[0].elev));
 
           var d2Date = new Date(d2);
