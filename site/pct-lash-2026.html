@@ -361,7 +361,7 @@ function renderMessages() {
     div.className = 'gtrk-msg-item';
     var html = '<div class="gtrk-msg-time">' + formatTime(m.time) + '</div>' +
                '<div class="gtrk-msg-text">' + cleanMsg(m.msg) + '</div>';
-    if (!offTrail) html += '<div class="gtrk-msg-locate" onclick="window.panToMessage(' + m.lat + ',' + m.lng + ')">📍 Locate on map</div>';
+    if (!offTrail && !m.noLocation) html += '<div class="gtrk-msg-locate" onclick="window.panToMessage(' + m.lat + ',' + m.lng + ')">📍 Locate on map</div>';
     div.innerHTML = html;
     list.appendChild(div);
   });
@@ -485,15 +485,29 @@ function renderMessages() {
         for (var i = 0; i < placemarks.length; i++) {
           var pm = placemarks[i];
           var coordStr = getTagText(pm, 'coordinates');
-          if (!coordStr) continue;
-          var parts = coordStr.trim().split(',');
-          if (parts.length < 2) continue;
-          var lng = parseFloat(parts[0]);
-          var lat = parseFloat(parts[1]);
-          if (isNaN(lat) || isNaN(lng)) continue;
           var when = getTagText(pm, 'when') || getTagText(pm, 'TimeStamp');
           var ext = parseExtData(pm);
           var msg = (ext['Text'] || '').trim();
+
+          var lat = null, lng = null, hasCoords = false;
+          if (coordStr) {
+            var parts = coordStr.trim().split(',');
+            if (parts.length >= 2) {
+              lng = parseFloat(parts[0]);
+              lat = parseFloat(parts[1]);
+              if (!isNaN(lat) && !isNaN(lng) && !(lat === 0 && lng === 0)) hasCoords = true;
+            }
+          }
+
+          if (!hasCoords) {
+            // Some MapShare messages (e.g. sent before the device got a fresh
+            // GPS fix) carry no location — "No location data available."
+            // Keep the message text instead of silently dropping it; just skip
+            // anything that needs coordinates (track point, map marker).
+            if (msg) allMessages.push({ lat: null, lng: null, time: when, msg: msg, noLocation: true });
+            continue;
+          }
+
           var point = { lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], course: ext['Course'], msg: msg };
           allPoints.push(point);
           if (msg) { msgPoints.push(point); allMessages.push({ lat: lat, lng: lng, time: when, msg: msg }); }
