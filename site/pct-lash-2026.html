@@ -293,6 +293,36 @@ function tripAvgSpeed(allPoints) {
   return ((total / moving.length) * 0.621371).toFixed(1) + ' mph';
 }
 
+// Great-circle distance in miles between two lat/lng points
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  var R = 3958.8;
+  var toRad = function(d) { return d * Math.PI / 180; };
+  var dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Drops GPS points that imply an impossible travel speed from the previous
+// KEPT point (e.g. a device reporting a stale cached position on power-on).
+// Walking pace tops out well under this; a generous ceiling avoids dropping
+// real points from vehicle support / shuttle segments.
+function filterGpsOutliers(sortedPoints, maxMph) {
+  if (sortedPoints.length < 2) return sortedPoints;
+  var out = [sortedPoints[0]];
+  for (var i = 1; i < sortedPoints.length; i++) {
+    var prev = out[out.length - 1];
+    var cur = sortedPoints[i];
+    var hours = (new Date(cur.time) - new Date(prev.time)) / 3600000;
+    if (!(hours > 0)) continue; // zero/negative/NaN gap — skip
+    var mph = haversineMiles(prev.lat, prev.lng, cur.lat, cur.lng) / hours;
+    if (mph > maxMph) continue; // implausible jump — skip
+    out.push(cur);
+  }
+  return out;
+}
+
 function offsetLatLng(latlng, dx, dy) {
   var pt = map.latLngToContainerPoint(latlng);
   return map.containerPointToLatLng([pt.x + dx, pt.y + dy]);
@@ -482,16 +512,16 @@ function renderMessages() {
         // Build a chronologically-sorted list of track points for the line/arrows,
         // since the feed doesn't guarantee point order and the polyline draws
         // points in array order (unlike the cluster markers, which are spatial).
-        var linePoints = allPoints
+        // Also drop GPS outliers (e.g. a device reporting a stale cached
+        // position on power-on) that would otherwise draw a spurious jump.
+        var sortedForLine = allPoints
           .filter(function(p) { return !p.msg; })
           .slice()
-          .sort(function(a, b) { return new Date(a.time) - new Date(b.time); })
-          .map(function(p) { return [p.lat, p.lng]; });
-        
-console.log('linePoints count:', linePoints.length, 'first:', linePoints[0], 'last:', linePoints[linePoints.length - 1]);
-console.log('trackPoints count:', trackPoints.length);
+          .sort(function(a, b) { return new Date(a.time) - new Date(b.time); });
+        var cleanedForLine = filterGpsOutliers(sortedForLine, 20); // 20 mph ceiling
+        var linePoints = cleanedForLine.map(function(p) { return [p.lat, p.lng]; });
+        window.debugLinePoints = linePoints; // temporary — safe to remove later
 
-        window.debugLinePoints = linePoints;
         if (linePoints.length > 1) {
           trackLine = L.polyline(linePoints, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
           trackBounds = trackLine.getBounds();
