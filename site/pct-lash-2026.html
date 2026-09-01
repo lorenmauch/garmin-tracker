@@ -463,7 +463,7 @@ function renderMessages() {
           if (isNaN(lat) || isNaN(lng)) continue;
           var when = getTagText(pm, 'when') || getTagText(pm, 'TimeStamp');
           var ext = parseExtData(pm);
-          var msg = ext['Text'] || '';
+          var msg = ext['Text'] || '').trim();
           var point = { lat: lat, lng: lng, time: when, speed: ext['Velocity'], elev: ext['Elevation'], course: ext['Course'], msg: msg };
           allPoints.push(point);
           if (msg) { msgPoints.push(point); allMessages.push({ lat: lat, lng: lng, time: when, msg: msg }); }
