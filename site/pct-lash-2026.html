@@ -491,6 +491,7 @@ function renderMessages() {
 console.log('linePoints count:', linePoints.length, 'first:', linePoints[0], 'last:', linePoints[linePoints.length - 1]);
 console.log('trackPoints count:', trackPoints.length);
 
+        window.debugLinePoints = linePoints;
         if (linePoints.length > 1) {
           trackLine = L.polyline(linePoints, { color: '#FF6900', weight: 3, opacity: 0.8 }).addTo(map);
           trackBounds = trackLine.getBounds();
